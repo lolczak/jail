@@ -4,6 +4,6 @@ mod linux;
 
 fn main() {
 
-    println!("Hello, world! {}", linux::get_pid());
+    println!("Hello, world! pid: {}, tid: {}", linux::getpid(), linux::gettid());
 
 }
