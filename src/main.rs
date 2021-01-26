@@ -2,8 +2,10 @@
 
 mod linux;
 
+use linux::syscall;
+
 fn main() {
-
-    println!("Hello, world! pid: {}, tid: {}", linux::getpid(), linux::gettid());
-
+    let pid = syscall::fork();
+    println!("pid: {}", pid);
+    println!("Hello, world! pid: {}, tid: {}", syscall::getpid(), syscall::gettid());
 }
