@@ -4,6 +4,7 @@ use syscall::platform::nr::*;
 use std::ffi::CString;
 use libc::c_char;
 
+
 //syscall.tbl arch/x86/entry/syscalls/syscall_64.tbl
 //tools/include/nolibc/nolibc.h
 
@@ -71,18 +72,20 @@ pub fn waitpid(pid: i64, status: *mut i64, options: usize) -> i64 {
     result as i64
 }
 
-pub fn execve(filename: &str, argv: Vec<&str>, envp: Vec<&str>) -> i64 {
+pub fn execve(filename: &str, arguments: Vec<&str>, environment: Vec<&str>) -> i64 {
     let c_filename = CString::new(filename.as_bytes()).unwrap();
-    let args: Vec<CString> = argv.iter().map(|arg| CString::new(arg.as_bytes()).unwrap()).collect();
+
+    let args: Vec<CString> = arguments.iter().map(|arg| CString::new(arg.as_bytes()).unwrap()).collect();
     let mut args_raw: Vec<*const c_char> = args.iter().map(|arg| arg.as_ptr()).collect();
     args_raw.push(std::ptr::null());
-    let arg_ptr: *const *const c_char = args_raw.as_ptr();
+    let argv: *const *const c_char = args_raw.as_ptr();
 
-    let env: Vec<CString> = envp.iter().map(|arg| CString::new(arg.as_bytes()).unwrap()).collect();
-    let mut env_raw: Vec<*const c_char> = env.iter().map(|arg| arg.as_ptr()).collect();
+    let env: Vec<CString> = environment.iter().map(|arg| CString::new(arg.as_bytes()).unwrap()).collect();
+    let mut env_raw: Vec<*const c_char> = unsafe { env.iter().map(|arg| arg.as_ptr()).collect() };
     env_raw.push(std::ptr::null());
-    let env_ptr: *const *const c_char = env_raw.as_ptr();
+    let envp: *const *const c_char = env_raw.as_ptr();
 
-    let result = unsafe { syscall3(EXECVE, c_filename.as_ptr() as usize, arg_ptr as usize, env_ptr as usize)};
+    let result = unsafe { syscall3(EXECVE, c_filename.as_ptr() as usize, argv as usize, envp as usize) };
+    // let result = unsafe { libc::execve(c_filename.as_ptr(), argv, envp) };
     result as i64
 }

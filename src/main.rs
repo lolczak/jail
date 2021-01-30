@@ -26,6 +26,6 @@ fn main() {
 
 fn runner() {
     println!("new thread");
-    let result = syscall::execve("/usr/bin/ls", vec!["/"], vec![]);
-    println!("{}", result);
+    let result = syscall::execve("/usr/bin/ls", vec!["ls", "-la", "--color=auto"], vec!["LS_COLORS=rs=0:di=38;5;33:ln=38;5;51:mh=00:pi=40;38;5;11:"]);
+    println!("result {}", result);
 }
