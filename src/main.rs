@@ -3,10 +3,12 @@
 mod linux;
 
 use linux::syscall;
-use crate::linux::syscall::{CLONE_THREAD, CLONE_FILES, CLONE_FS, CLONE_IO, CLONE_PIDFD, CLONE_NEWPID, WSTOPPED, WEXITED, WUNTRACED, WCONTINUED};
+use crate::linux::syscall::{CLONE_THREAD, CLONE_FILES, CLONE_FS, CLONE_IO, CLONE_PIDFD, CLONE_NEWPID, WSTOPPED, WEXITED, WUNTRACED, WCONTINUED, execve};
 use std::process::exit;
 
 fn main() {
+    let v: Vec<&str> = "abc1def2ghi".split(|c: char| c.is_numeric()).collect();
+
     let flags = CLONE_FILES | CLONE_FS | CLONE_IO;
     // let pid = syscall::clone(flags);
     let pid = syscall::fork();
@@ -23,5 +25,7 @@ fn main() {
 }
 
 fn runner() {
-    println!("new thread")
+    println!("new thread");
+    let result = syscall::execve("/usr/bin/ls", vec!["/"], vec![]);
+    println!("{}", result);
 }
