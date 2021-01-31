@@ -67,6 +67,13 @@ pub const WEXITED: usize = 0x00000004;
 pub const WCONTINUED: usize = 0x00000008;
 pub const WNOWAIT: usize = 0x01000000;
 
+//#define WEXITSTATUS(status)   (((status) & 0xff00) >> 8)
+// #define WIFEXITED(status)     (((status) & 0x7f) == 0)
+
+pub fn WIFEXITED(status: i64) -> bool {
+    (status & 0x7f) == 0
+}
+
 pub fn waitpid(pid: i64, status: *mut i64, options: usize) -> i64 {
     let result = unsafe { syscall4(WAIT4, pid as usize, status as usize, options , 0) };
     result as i64
