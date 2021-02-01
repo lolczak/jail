@@ -1,4 +1,5 @@
 #![feature(asm)]
+#![feature(untagged_unions)]
 
 mod linux;
 
@@ -35,6 +36,7 @@ fn main() {
             let data_ptr = &iovec as *const _;
             let res = sys_ptrace(PTRACE_GETREGSET, pid as i32, 1, data_ptr as usize);
             println!("{} Regs: {}", res, registers);
+            println!("Syscall info: {}", get_syscall_info(pid as i32));
             sys_ptrace(PTRACE_SYSCALL, pid as i32, 0, 0);
         }
     }

@@ -4,6 +4,9 @@ use syscall::platform::nr::*;
 use crate::linux::types::pid_t;
 use std::ffi::c_void;
 use std::fmt;
+use std::mem;
+use std::fmt::Formatter;
+use std::borrow::Borrow;
 
 //include/uapi/linux/ptrace.h
 //arch/x86/include/uapi/asm/ptrace-abi.h
@@ -97,12 +100,73 @@ pub struct PtraceRegisters {
 
 impl fmt::Display for PtraceRegisters {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "orig_rax: {}, rax: {}, rdi: {}, rsi: {}, rdx: {}, ss: {})", self.orig_rax, self.rax, self.rdi, self.rsi, self.rdx, self.ss)
+        write!(f, "orig_rax: {}, rax: {}, rdi: {}, rsi: {}, rdx: {}, rip: {}", self.orig_rax, (self.rax as i64), self.rdi, self.rsi, self.rdx, self.rip)
     }
 }
+
+#[repr(C)]
+pub struct PtraceSyscallInfo {
+    op: u8,
+    arch: u32,
+    instruction_pointer: u64,
+    stack_pointer: u64,
+    info: SyscallInfo
+}
+
+#[repr(C)]
+union SyscallInfo {
+    entry: EntryInfo,
+    exit: ExitInfo,
+    seccomp: SeccompInfo
+}
+
+#[repr(C)]
+#[derive(Debug, Default)]
+struct EntryInfo {
+    nr: u64,
+    args: [u64; 6]
+}
+
+#[repr(C)]
+#[derive(Debug, Default)]
+struct ExitInfo {
+    rval: i64,
+    is_error: u8
+}
+
+#[repr(C)]
+#[derive(Debug, Default)]
+struct SeccompInfo {
+    nr: u64,
+    args: [u64; 6],
+    ret_data: u32
+}
+
+impl fmt::Display for PtraceSyscallInfo {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "op: {}, arch: {}, ip: {}, sp: {}", self.op, self.arch, self.instruction_pointer, self.stack_pointer);
+        if (self.op == (PTRACE_SYSCALL_INFO_ENTRY as u8)) {
+            let nr = unsafe { self.info.entry.nr };
+            let args = unsafe { self.info.entry.args };
+            write!(f, "nr: {}, args: {}",nr , args[0])
+        } else {
+            write!(f, " none")
+        }
+    }
+}
+
 
 // pub fn sys_ptrace(request: usize, pid: pid_t, addr: *mut c_void, data: *mut c_void) -> i64 {
 pub fn sys_ptrace(request: usize, pid: pid_t, addr: usize, data: usize) -> i64 {
     let result = unsafe { syscall4(SYS_PTRACE, request, pid as usize, addr, data) };
     result as i64
+}
+
+pub fn get_syscall_info(pid: pid_t) -> PtraceSyscallInfo {
+    let mut syscall_info = PtraceSyscallInfo { op:1, arch:0, instruction_pointer:0,stack_pointer:0,info:SyscallInfo { seccomp: SeccompInfo::default() } };
+    let address =  &syscall_info as *const _;
+    let length = mem::size_of::<PtraceSyscallInfo>();
+    let result = sys_ptrace(PTRACE_GET_SYSCALL_INFO, pid, length, address as usize);
+
+    syscall_info
 }

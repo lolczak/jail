@@ -1,0 +1,1 @@
+//tools/arch/mips/include/uapi/asm/errno.h
