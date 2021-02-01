@@ -97,7 +97,7 @@ pub struct PtraceRegisters {
 
 impl fmt::Display for PtraceRegisters {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "orig_rax: {}, rax: {})", self.orig_rax, self.rax)
+        write!(f, "orig_rax: {}, rax: {}, rdi: {}, rsi: {}, rdx: {})", self.orig_rax, self.rax, self.rdi, self.rsi, self.rdx)
     }
 }
 
