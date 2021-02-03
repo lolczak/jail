@@ -79,12 +79,12 @@ pub struct PtraceRegisters {
     r10      : u64,
     r9       : u64,
     r8       : u64,
-    rax      : u64,
+    pub rax      : u64,
     rcx      : u64,
     rdx      : u64,
     rsi      : u64,
     rdi      : u64,
-    orig_rax : u64,
+    pub orig_rax : u64,
     rip      : u64,
     cs       : u64,
     eflags   : u64,
@@ -180,4 +180,13 @@ pub fn get_registers(pid: pid_t) -> PtraceRegisters {
     let res = sys_ptrace(PTRACE_GETREGSET, pid as i32, 1, data_ptr as usize);
 
     registers
+}
+
+pub fn set_registers(pid: pid_t, registers: PtraceRegisters) -> i64 {
+    let address = &registers as *const _;
+    let length = mem::size_of::<PtraceRegisters>();
+    let mut iovec: IoVec = IoVec { base: address as usize, len: length as u64 };
+    let data_ptr = &iovec as *const _;
+    let res = sys_ptrace(PTRACE_SETREGSET, pid as i32, 1, data_ptr as usize);
+    res
 }
