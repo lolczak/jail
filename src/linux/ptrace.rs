@@ -7,7 +7,7 @@ use std::fmt;
 use std::mem;
 use std::fmt::Formatter;
 use std::borrow::Borrow;
-
+use crate::linux::types::IoVec;
 //include/uapi/linux/ptrace.h
 //arch/x86/include/uapi/asm/ptrace-abi.h
 //arch/x86/include/uapi/asm/ptrace.h
@@ -169,4 +169,15 @@ pub fn get_syscall_info(pid: pid_t) -> PtraceSyscallInfo {
     let result = sys_ptrace(PTRACE_GET_SYSCALL_INFO, pid, length, address as usize);
 
     syscall_info
+}
+
+pub fn get_registers(pid: pid_t) -> PtraceRegisters {
+    let mut registers: PtraceRegisters = PtraceRegisters::default();
+    let address = &registers as *const _;
+    let length = mem::size_of::<PtraceRegisters>();
+    let mut iovec: IoVec = IoVec { base: address as usize, len: length as u64 };
+    let data_ptr = &iovec as *const _;
+    let res = sys_ptrace(PTRACE_GETREGSET, pid as i32, 1, data_ptr as usize);
+
+    registers
 }
